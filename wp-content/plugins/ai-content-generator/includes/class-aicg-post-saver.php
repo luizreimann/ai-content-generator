@@ -166,9 +166,9 @@ class AICG_Post_Saver {
         }
 
         // Append debug info as <pre> block
-        $debug_block  = "\n\n<pre class=\"aicg-debug\">\n";
-        $debug_block .= implode( "\n", $debug );
-        $debug_block .= "\n</pre>";
+        // $debug_block  = "\n\n<pre class=\"aicg-debug\">\n";
+        // $debug_block .= implode( "\n", $debug );
+        // $debug_block .= "\n</pre>";
 
         wp_update_post( [
             'ID'           => $post_id,
