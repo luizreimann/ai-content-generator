@@ -9,6 +9,7 @@
 /wp-content/index.php
 /wp-content/languages
 /wp-content/plugins/index.php
+/wp-content/plugins/akismet/*
 /wp-content/themes/index.php
 /wp-includes/
 /index.php
@@ -31,6 +32,8 @@ wp-config.php
 
 # Log files
 *.log
+*.zip
+.DS_Store
 
 # htaccess
 /.htaccess
