@@ -12,15 +12,15 @@
 
         // Fallback messages if aicgData.i18n is not defined
         var msg = (window.aicgData && window.aicgData.i18n) ? aicgData.i18n : {
-            promptRequired:     'Please enter a prompt.',
-            generating:         'Generating...',
-            generatingArticle:  'Generating article...',
-            generateArticle:    'Generate Article',
-            errorGenerate:      'Error generating content.',
-            saving:             'Saving...',
-            saved:              'Saved',
+            promptRequired:     'Por favor, insira um prompt.',
+            generating:         'Gerando...',
+            generatingArticle:  'Gerando artigo...',
+            generateArticle:    'Gerar Artigo',
+            errorGenerate:      'Erro gerando conteúdo.',
+            saving:             'Salvando...',
+            saved:              'Salvo com sucesso.',
             saveArticle:        'Save Article',
-            errorSave:          'Error saving post.',
+            errorSave:          'Erro ao salvar.',
             editPostUrl:        window.location.origin + '/wp-admin/post.php?post='
         };
 
@@ -51,10 +51,10 @@
                 }
             })
             .done(function() {
-                console.log('API key saved successfully.');
+                console.log('Chave API salva com sucesso.');
             })
             .fail(function() {
-                console.error('Failed to save API key.');
+                console.error('Falha ao salvar chave API.');
             });
         });
 
@@ -111,7 +111,7 @@
                         html += '<div class="aicg-image-wrapper position-relative d-inline-block mb-3" data-idx="' + idx + '">';
                         html +=   '<img src="' + url + '" alt="' + alt + '" class="img-fluid" />';
                         html +=   '<button type="button" class="btn btn-sm btn-secondary aicg-regenerate-button" ' +
-                                'style="position:absolute; top:5px; right:5px; display:none;">Regenerate</button>';
+                                'style="position:absolute; top:5px; right:5px; display:none;">Regenerar</button>';
                         html += '</div>';
                     });
                 }
