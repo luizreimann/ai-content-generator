@@ -2,7 +2,7 @@
 /**
  * Class AICG_REST
  *
- * Registra endpoints REST para geração e salvamento de artigos via IA.
+ * Registers REST endpoints for AI-generated article creation and saving.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,7 +16,7 @@ class AICG_REST {
     /** @var AICG_REST|null */
     private static $instance = null;
 
-    /** Retorna instância única */
+    /** Returns the single instance */
     public static function get_instance() {
         if ( null === self::$instance ) {
             self::$instance = new self();
@@ -24,12 +24,12 @@ class AICG_REST {
         return self::$instance;
     }
 
-    /** Construtor privado: registra as rotas */
+    /** Private constructor: registers the REST routes */
     private function __construct() {
         add_action( 'rest_api_init', [ $this, 'register_routes' ] );
     }
 
-    /** Registra as rotas REST */
+    /** Registers the REST routes */
     public function register_routes() {
         register_rest_route( 'aicg/v1', '/generate', [
             'methods'             => 'POST',
@@ -52,10 +52,17 @@ class AICG_REST {
                 return current_user_can( 'edit_posts' );
             },
         ] );
+        register_rest_route( 'aicg/v1', '/save-api-key', [
+            'methods'             => 'POST',
+            'callback'            => [ $this, 'handle_save_api_key' ],
+            'permission_callback' => function() {
+                return current_user_can( 'manage_options' );
+            },
+        ] );
     }
 
     /**
-     * Gera conteúdo via OpenAI.
+     * Generates content via OpenAI.
      *
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
@@ -68,19 +75,25 @@ class AICG_REST {
             return new WP_Error( 'no_prompt', __( 'Prompt não fornecido.', 'ai-content-generator' ), [ 'status' => 400 ] );
         }
 
-        // Captura os modelos enviados pelo JS (ou usa string vazia)
+        // Capture the models sent from JS (or use an empty string)
         $text_model  = isset($params['text_model'])  ? sanitize_text_field($params['text_model'])  : '';
         $image_model = isset($params['image_model']) ? sanitize_text_field($params['image_model']) : '';
 
-        // Captura quantas imagens foram solicitadas (mínimo 1)
+        // Capture the number of requested images (minimum 1)
         $num_images = isset( $params['num_images'] ) ? absint( $params['num_images'] ) : 1;
         if ( $num_images < 1 ) {
             $num_images = 1;
         }
 
-        // Chama a geração com overrides
+        // Capture the API key sent from JS (or use the default)
+        $api_key = isset( $params['api_key'] ) ? sanitize_text_field( $params['api_key'] ) : '';
+
+        // Capture the minimum word count if provided
+        $min_words = isset( $params['min_words'] ) ? absint( $params['min_words'] ) : 1500; // Default to 1500 if not provided
+
+        // Invoke generation with overrides
         $openai = AICG_OpenAI::get_instance();
-        $result = $openai->generate_content( $prompt, $text_model, $image_model, $num_images );
+        $result = $openai->generate_content( $prompt, $text_model, $image_model, $num_images, $api_key, $min_words );
 
         if ( is_wp_error( $result ) ) {
             return $result;
@@ -90,7 +103,7 @@ class AICG_REST {
     }
 
     /**
-     * Gera um post a partir dos dados recebidos.
+     * Saves a post from the provided data.
      *
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
@@ -109,7 +122,7 @@ class AICG_REST {
     }
 
     /**
-     * Regenera uma imagem via OpenAI.
+     * Regenerates an image via OpenAI.
      *
      * @param WP_REST_Request $request
      * @return WP_REST_Response|WP_Error
@@ -126,13 +139,40 @@ class AICG_REST {
             );
         }
 
+        // Capture the API key for regeneration
+        $api_key = isset( $params['api_key'] ) ? sanitize_text_field( $params['api_key'] ) : '';
+
         $openai = AICG_OpenAI::get_instance();
-        $result = $openai->generate_image( $prompt );
+        $result = $openai->generate_image( $prompt, '', $api_key );
 
         if ( is_wp_error( $result ) ) {
             return $result;
         }
 
         return rest_ensure_response( [ 'url' => $result ] );
+    }
+
+    /**
+     * Saves the OpenAI API key to the options table.
+     *
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handle_save_api_key( WP_REST_Request $request ) {
+        $params = $request->get_json_params();
+        $api_key = isset( $params['api_key'] ) ? sanitize_text_field( $params['api_key'] ) : '';
+
+        if ( empty( $api_key ) ) {
+            return new WP_Error(
+                'no_api_key',
+                __( 'API key not provided.', 'ai-content-generator' ),
+                [ 'status' => 400 ]
+            );
+        }
+
+        // Save the option
+        update_option( 'aicg_openai_api_key', $api_key );
+
+        return rest_ensure_response( [ 'success' => true ] );
     }
 }
